@@ -1,0 +1,9 @@
+venv/
+env/
+
+__psycache__/
+*.pyc/
+
+.db
+
+.vscode/
