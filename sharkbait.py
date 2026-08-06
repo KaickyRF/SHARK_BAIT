@@ -1,16 +1,7 @@
 import sys
 
 import requests
-from fastapi import FastAPI
-
 import pandas as pd
-import sqlite3
-from sqlalchemy import Column, Float, Integer, String, create_engine
-from sqlalchemy.orm import declarative_base, sessionmaker
-
-
-app = FastAPI()
-base = declarative_base()
 
 def main():
     pd.set_option("display.max_columns", None)
