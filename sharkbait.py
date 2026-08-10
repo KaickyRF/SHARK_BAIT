@@ -28,14 +28,12 @@ def extract(page_size=60):
     headers = {
         "User-Agent": "SharkBait/1.0 (CS50P Final Project)"
     }
-    response = requests.get(f"https://www.cheapshark.com/api/1.0/deals?pageSize={page_size}", 
-                            headers=headers)
+    response = requests.get(f"https://www.cheapshark.com/api/1.0/deals?pageSize={page_size}", headers=headers)
     response.raise_for_status()
     data = response.json()
 
 
-    store_response = requests.get("https://www.cheapshark.com/api/1.0/stores", 
-                                  headers=headers)
+    store_response = requests.get("https://www.cheapshark.com/api/1.0/stores", headers=headers)
     store_response.raise_for_status()
     stores = store_response.json()
 
@@ -52,7 +50,7 @@ def transform(data, stores):
     :return: a game offer pd.DataFrame with structured data and builtin metrics
         """
     
-    essential = ["title", "storeID","salePrice", "normalPrice", "metacriticScore", "steamRatingText", "steamRatingPercent"]
+    essential = ["dealID", "title", "storeID","salePrice", "normalPrice", "metacriticScore", "steamRatingText", "steamRatingPercent"]
     rename = {
     "title": "Title",
     "storeID": "Shop",
@@ -99,7 +97,7 @@ def custom_metrics(frame1):
     #Create a custom metric, use previous avg rating with an avg Rate|Price and sort with it
     frame1["Sort by Rate|Price"] = frame1["Critic|Steam"] - (frame1["Price_now"] * 0.1)
     frame2 = frame1.sort_values(by="Sort by Rate|Price", ascending=False)
-    frame2 = frame2.drop_duplicates(subset="Title", keep="first")
+    frame2 = frame2.drop_duplicates(subset="dealID", keep="first")
 
     frame2["Critic|Steam"] = frame2["Critic|Steam"].round(2)
     frame2["Sort by Rate|Price"] = frame2["Sort by Rate|Price"].round(2)
