@@ -1,7 +1,10 @@
 import sys
+from database import Base, engine, SessionLocal
+from models import Deal
 
 import requests
 import pandas as pd
+from sqlalchemy.dialects.sqlite import insert
 
 def main():
     pd.set_option("display.max_columns", None)
@@ -9,13 +12,7 @@ def main():
 
     data, stores = extract()
     frame = transform(data, stores)
-    if len(sys.argv) > 1:
-        path = sys.argv[1].strip()
-        if not path.endswith(".csv"):
-            path = path + ".csv"
-        load(frame, path)
-    else: 
-        load(frame)
+    load(frame)
     
 def extract(page_size=60):
     """
@@ -105,7 +102,7 @@ def custom_metrics(frame1):
 
     return frame2
 
-def load(frame, path="shark_offers_now.csv"):
+def load(frame):
     """
     Create a CSV archive from a pd.DataFrame with game offers
     
@@ -114,12 +111,51 @@ def load(frame, path="shark_offers_now.csv"):
     default name
     :return: 'Successful load' for feedback and a CSV file or exception error message
     """
-    try:
-        frame.to_csv(path, index=False)
-        print(f"Successful load of {path}")
 
-    except Exception as error:
-        print(f"An load error ocurred: {error}")
+    db_renames = {
+    "Title": "title",
+    "Shop": "shop",
+    "Price_now": "price_now",
+    "Normal_price": "normal_price",
+    "Metacritic": "metacritic",
+    "Steam_rate": "steam_rate",
+    "Steam_rate(%)": "steam_rate_percent",
+    "Critic|Steam": "critic_steam",
+    "Sort by Rate|Price": "sort_rate_price"
+    }
+    #Match Dataframe names with SQL Model
+    frame_db = frame.rename(columns=db_renames)
+
+    #Create/update SQL table
+    Base.metadata.create_all(bind=engine)
+    records = frame_db.to_dict(orient="records")
+
+    session = SessionLocal()
+    try:
+        for record in records:
+            sttmt = insert(Deal).values(**record)
+
+            sttmt = sttmt.on_conflict_do_update(
+                index_elements=[Deal.dealID],
+                set_={
+                    "price_now": record["price_now"],
+                    "normal_price": record["normal_price"],
+                    "metacritic": record["metacritic"],
+                    "steam_rate": record["steam_rate"],
+                    "steam_rate_percent": record["steam_rate_percent"],
+                    "critic_steam": record["critic_steam"],
+                    "sort_rate_price": record["sort_rate_price"],
+                },
+            )
+            session.execute(sttmt)
+        session.commit()
+        print(f"{len(records)} deals insert into SQLite")
+
+    except Exception as e:
+        session.rollback()
+        print(f"Error in the SQLite insert: {e}")
+    finally:
+        session.close()
 
 
 if __name__ == "__main__":

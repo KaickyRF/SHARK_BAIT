@@ -3,7 +3,10 @@ env/
 
 __psycache__/
 *.pyc/
+*.pyc
 
-.db
+*.db
+*.sqlite
+*.sqlite3
 
 .vscode/
