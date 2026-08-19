@@ -103,13 +103,19 @@ def custom_metrics(frame1):
     return frame2
 
 def load(frame):
-    """
-    Create a CSV archive from a pd.DataFrame with game offers
-    
-    :param frame: a pd.DataFrame with structured offers from Cheapshark API
-    :param path: a str for the archive path and name; if there is no path given create in the same folder with 
-    default name
-    :return: 'Successful load' for feedback and a CSV file or exception error message
+    """Saves or updates game offers from a pandas DataFrame into the SQLite database.
+
+    Performs an UPSERT (insert or update) operation using the 'dealID' as
+    the constraint key. If a deal already exists in the database, it
+    updates its prices, ratings, and metrics; otherwise, it inserts it as
+    a new row.
+
+    :param frame: A pandas DataFrame containing structured offers from the
+    CheapShark API.
+    :type frame: pd.DataFrame
+    :return: None
+    :raises Exception: Rolls back the transaction and logs an error if the
+    database operation fails.
     """
 
     db_renames = {
