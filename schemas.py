@@ -13,6 +13,7 @@ class DealResponse(BaseModel):
     steam_rate_percent: Optional[float] = None
     critic_steam: float
     sort_rate_price: float
+    thumb: Optional[str] = None
 
     class Config:
         from_atributes: True

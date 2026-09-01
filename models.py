@@ -16,4 +16,4 @@ class Deal(Base):
     steam_rate_percent = Column(Float, nullable=True)
     critic_steam = Column(Float, nullable=False)
     sort_rate_price = Column(Float, nullable=False, index=True)
-    
+    thumb = Column(String, nullable=True)

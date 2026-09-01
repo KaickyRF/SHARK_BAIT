@@ -43,17 +43,24 @@ function createGameCardHTML(deal) {
     const priceNow = formatCurrency(deal.price_now);
     const priceOld = formatCurrency(deal.normal_price);
     
-    // Fallback para capa padrão e link redirecionador
-    const coverUrl = `https://www.cheapshark.com/landing?dealID=${deal.dealID}`;
-    const redirectUrl = `https://www.cheapshark.com/redirect?dealID=${deal.dealID}`;
+    // Fallback para capa padrão e link redirecionadorhttp
+   const coverthumb = deal.thumb;
+const fallbackimg = 'https://images.unsplash.com/photo-1560275619-4662e36fa65c?w=300&auto=format&fit=crop';
+const redirectUrl = `https://www.cheapshark.com/redirect?dealID=${deal.dealID}`;
 
-    return `
-        <article class="games-card">
-            <img src="${coverUrl}" alt="${deal.title}" class="game-cover" loading="lazy" />
+return `
+    <article class="games-card">
+        <img 
+            src="${coverthumb || fallbackimg}" 
+            alt="${deal.title}" 
+            class="game-cover" 
+            loading="lazy" 
+            onerror="this.onerror=null; this.src='${fallbackimg}';" 
+        />
 
             <div class="games-info">
                 <h3 class="games-title">${deal.title}</h3>
-                <span class="games-store">${deal.shop || 'Store'}</span>
+            <span class="games-store">${deal.shop || 'Store'}</span>
                 <span class="games-steam-string">${deal.steam_rate || 'No Reviews'}</span>
                 <span class="games-metacritic">Metacritic: ${deal.metacritic ?? 'N/A'}</span>
             </div>

@@ -1,4 +1,3 @@
-import sys
 from database import Base, engine, SessionLocal
 from models import Deal
 
@@ -47,16 +46,19 @@ def transform(data, stores):
     :return: a game offer pd.DataFrame with structured data and builtin metrics
         """
     
-    essential = ["dealID", "title", "storeID","salePrice", "normalPrice", "metacriticScore", "steamRatingText", "steamRatingPercent"]
+    essential = ["dealID", "title", "storeID","salePrice", "normalPrice",
+    "metacriticScore", "steamRatingText", "steamRatingPercent", "thumb"]
+    
     rename = {
-    "title": "Title",
-    "storeID": "Shop",
-    "salePrice": "Price_now",
-    "normalPrice": "Normal_price",
-    "metacriticScore": "Metacritic",
-    "steamRatingText": "Steam_rate",
-    "steamRatingPercent": "Steam_rate(%)"
-    }
+    'dealID': 'dealID',
+    'title': 'title',
+    'storeID': 'shop',
+    'salePrice': 'price_now',
+    'normalPrice': 'normal_price',
+    'metacriticScore': 'metacritic',
+    'steamRatingText': 'steam_rate',
+    'steamRatingPercent': 'steam_rate_percent',
+    'thumb': 'thumb'}
     #Create the structure (dict) to change storeID for its name later
     s = pd.DataFrame(stores)
     dicts_store = s.set_index("storeID")["storeName"].to_dict()
@@ -65,15 +67,15 @@ def transform(data, stores):
     frame0 = d[essential]
     frame1 = frame0.rename(columns=rename)
 
-    frame1["Price_now"] = frame1["Price_now"].astype(float)
-    frame1["Metacritic"] = frame1["Metacritic"].astype(float)
-    frame1["Steam_rate(%)"] = frame1["Steam_rate(%)"].astype(float)
-    frame1["Normal_price"]= frame1["Normal_price"].astype(float)
+    frame1["price_now"] = frame1["price_now"].astype(float)
+    frame1["metacritic"] = frame1["metacritic"].astype(float)
+    frame1["steam_rate_percent"] = frame1["steam_rate_percent"].astype(float)
+    frame1["normal_price"]= frame1["normal_price"].astype(float)
 
 
-    frame1["Shop"] = frame1["Shop"].map(dicts_store)
+    frame1["shop"] = frame1["shop"].map(dicts_store)
     frame2 = frame1.reset_index(drop=True)
-    frame2["Steam_rate"] = frame2["Steam_rate"].fillna("No Reviews")
+    frame2["steam_rate"] = frame2["steam_rate"].fillna("No Reviews")
 
     frame3 = custom_metrics(frame2)
 
@@ -87,18 +89,18 @@ def custom_metrics(frame1):
      
     :param frame1: a pd.DataFrame with Cheapshark API games
     :return: a pd.DataFrame with custom metrics in columns, sorted by Rate|Price """
-    #Create a custom metric, use all rate data for average data Critic|Steam, priorize user rating
-    frame1["Critic|Steam"] = (frame1["Metacritic"] * 0.3) + (frame1["Steam_rate(%)"] * 0.7)
-    frame1.loc[frame1["Metacritic"] == 0, "Critic|Steam"] = frame1["Steam_rate(%)"] * 0.9
+    #Create a custom metric, use all rate data for average data critic_steam, priorize user rating
+    frame1["critic_steam"] = (frame1["metacritic"] * 0.3) + (frame1["steam_rate_percent"] * 0.7)
+    frame1.loc[frame1["metacritic"] == 0, "critic_steam"] = frame1["steam_rate_percent"] * 0.9
 
     #Create a custom metric, use previous avg rating with an avg Rate|Price and sort with it
-    frame1["Sort by Rate|Price"] = frame1["Critic|Steam"] - (frame1["Price_now"] * 0.1)
-    frame2 = frame1.sort_values(by="Sort by Rate|Price", ascending=False)
+    frame1["sort_rate_price"] = frame1["critic_steam"] - (frame1["price_now"] * 0.1)
+    frame2 = frame1.sort_values(by="sort_rate_price", ascending=False)
     frame2 = frame2.drop_duplicates(subset="dealID", keep="first")
 
-    frame2["Critic|Steam"] = frame2["Critic|Steam"].round(2)
-    frame2["Sort by Rate|Price"] = frame2["Sort by Rate|Price"].round(2)
-    frame2["Price_now"] = frame2["Price_now"].round(2)
+    frame2["critic_steam"] = frame2["critic_steam"].round(2)
+    frame2["sort_rate_price"] = frame2["sort_rate_price"].round(2)
+    frame2["price_now"] = frame2["price_now"].round(2)
 
     return frame2
 
@@ -118,23 +120,9 @@ def load(frame):
     database operation fails.
     """
 
-    db_renames = {
-    "Title": "title",
-    "Shop": "shop",
-    "Price_now": "price_now",
-    "Normal_price": "normal_price",
-    "Metacritic": "metacritic",
-    "Steam_rate": "steam_rate",
-    "Steam_rate(%)": "steam_rate_percent",
-    "Critic|Steam": "critic_steam",
-    "Sort by Rate|Price": "sort_rate_price"
-    }
-    #Match Dataframe names with SQL Model
-    frame_db = frame.rename(columns=db_renames)
-
     #Create/update SQL table
     Base.metadata.create_all(bind=engine)
-    records = frame_db.to_dict(orient="records")
+    records = frame.to_dict(orient="records")
 
     session = SessionLocal()
     try:
@@ -151,6 +139,7 @@ def load(frame):
                     "steam_rate_percent": record["steam_rate_percent"],
                     "critic_steam": record["critic_steam"],
                     "sort_rate_price": record["sort_rate_price"],
+                    "thumb": record["thumb"],
                 },
             )
             session.execute(sttmt)
