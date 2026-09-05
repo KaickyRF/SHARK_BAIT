@@ -43,20 +43,31 @@ function createGameCardHTML(deal) {
     const priceNow = formatCurrency(deal.price_now);
     const priceOld = formatCurrency(deal.normal_price);
     
-    // Fallback para capa padrão e link redirecionadorhttp
+
    const coverthumb = deal.thumb;
 const fallbackimg = 'https://images.unsplash.com/photo-1560275619-4662e36fa65c?w=300&auto=format&fit=crop';
 const redirectUrl = `https://www.cheapshark.com/redirect?dealID=${deal.dealID}`;
 
 return `
     <article class="games-card">
-        <img 
-            src="${coverthumb || fallbackimg}" 
-            alt="${deal.title}" 
-            class="game-cover" 
-            loading="lazy" 
-            onerror="this.onerror=null; this.src='${fallbackimg}';" 
-        />
+        <div class="games-wrapper">
+            <img 
+                src="${coverthumb || fallbackimg}" 
+                alt="${deal.title}" 
+                class="game-bg" 
+                loading="lazy" 
+                onerror="this.onerror=null; this.src='${fallbackimg}';" 
+            />  
+        
+
+            <img 
+                src="${coverthumb || fallbackimg}" 
+                alt="${deal.title}" 
+                class="game-cover" 
+       "         loading="lazy" 
+                onerror="this.onerror=null; this.src='${fallbackimg}';" 
+            />
+        </div>
 
             <div class="games-info">
                 <h3 class="games-title">${deal.title}</h3>
@@ -85,7 +96,7 @@ return `
 
 function renderGames(deals) {
     if (!deals || deals.length === 0) {
-        DOM.gamesGrid.innerHTML = '<p class="loading">Nenhuma oferta disponível no momento.</p>';
+        DOM.gamesGrid.innerHTML = '<p class="loading">No offers baited.</p>';
         return;
     }
 
@@ -101,7 +112,7 @@ async function fetchDeals() {
         const response = await fetch(CONFIG.API_URL);
 
         if (!response.ok) {
-            throw new Error(`Erro na API: ${response.status}`);
+            throw new Error(`API error: ${response.status}`);
         }
 
         const deals = await response.json();
@@ -110,8 +121,8 @@ async function fetchDeals() {
         renderGames(deals);
 
     } catch (error) {
-        console.error('Erro na integração:', error);
-        DOM.gamesGrid.innerHTML = '<p class="loading">Ops! Falha ao conectar com o backend local.</p>';
+        console.error('Integration error:', error);
+        DOM.gamesGrid.innerHTML = '<p class="loading">Issue in contact with backend</p>';
     }
 }
 

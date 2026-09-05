@@ -61,7 +61,7 @@ header p {
     text-align: center;
 }
 
-.kpis-total, .kpis-promo{
+.kpis-promo{
     display: block;
     color: var(--text-secondary);
     font-size: 0.875rem;
@@ -77,13 +77,26 @@ header p {
 
 .games-controls {
     display: flex;
-    justify-content: flex-end;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    box-sizing: border-box;
     margin-bottom: 20px;
 }
 
+.games-amount {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    h2 {
+        color: var(--accent-green);
+    }
+}
+
+
 #refresh-btn {
     background-color: var(--bg-surface);
-    color: var(--bg-primary);
+    color: var(--text);
     border: 1px solid var(--bg-surface-hover);
     border-radius: 6px;
     padding: 10px 16px;
@@ -99,7 +112,7 @@ header p {
 
 .games-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
     gap: 20px
 }
 
@@ -111,25 +124,48 @@ header p {
     padding: 40px 0;
 }
 
-.ganes-card {
+.games-card {
     background-color: var(--bg-surface);
     border: 1px solid var(--bg-surface-hover);
+    width: 100%;
     border-radius: 8px;
-    overflow: hidden;
     display: flex;
     flex-direction: column;
     padding: 16px;
-    gap: 12px
+    gap: 15px
+}
+
+
+.games-wrapper {
+    position: relative;
+    width: 100%;
+    height: 250px;
+    border-radius: 8px;
+    overflow: hidden;
+    background-color: var(--bg-surface);
+}
+
+.game-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    filter: blur(12px) brightness(0.5);
+    transform: scale(1.1);
 }
 
 .game-cover {
+    position: relative;
     width: 100%;
-    height: 140px;
-    object-fit: cover;
+    height: 100%;
+    object-fit: contain;
     border-radius: 4px;
+    z-index: 1;
 }
 
-.ganes-info {
+.games-info {
     display: flex;
     flex-direction: column;
     gap: 4px;
@@ -160,7 +196,7 @@ header p {
 .games-offer-price {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 7px;
 }
 
 .games-discount {
@@ -184,10 +220,18 @@ header p {
     text-decoration: line-through;
 }
 
+.games-critic-steam {
+    font-size: 0.9rem;
+    font-weight: 700;
+    color: var(--accent-green);
+    padding: 8px;
+    white-space: nowrap;
+}
+
 .buy-btn {
     display: block;
     text-align: center;
-    background-color: var(--accent-blue);
+    background-color: var(--accent-green);
     color: #ffffff;
     text-decoration: none;
     padding: 10px;
