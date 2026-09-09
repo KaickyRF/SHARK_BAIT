@@ -179,6 +179,7 @@ header p {
 .games-store,
 .games-steam-string,
 .games-steam-rate,
+.games-updated-at,
 .games-metacritc {
     font-size: 0.85rem;
     color: var(--text-secondary);

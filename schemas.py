@@ -1,9 +1,11 @@
+from datetime import datetime
 from pydantic import BaseModel
 from typing import Optional
 
 
 class DealResponse(BaseModel):
     dealID: str
+    updated_at: datetime
     title: str
     shop: str
     price_now: float

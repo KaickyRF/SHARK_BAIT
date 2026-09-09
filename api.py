@@ -1,3 +1,4 @@
+from datetime import datetime, timezone, timedelta
 import models
 import schemas
 
@@ -32,5 +33,11 @@ def get_database():
 
 @app.get("/deals", response_model=List[schemas.DealResponse])
 def get_deals(db: Session = Depends(get_database)):
-    deals = db.query(models.Deal).order_by(models.Deal.sort_rate_price.desc()).all()
+
+    time_stamp = datetime.now(timezone.utc) - timedelta(days=1)
+
+    deals = (
+        db.query(models.Deal)
+        .filter(models.Deal.updated_at >= time_stamp)
+        .order_by(models.Deal.sort_rate_price.desc())).all()
     return deals

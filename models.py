@@ -1,11 +1,12 @@
 from database import Base
-from sqlalchemy import Column, Float, Integer, String
+from sqlalchemy import Column, Float, Integer, String, DateTime
 
 class Deal(Base):
     __tablename__= "deals"
 
     id = Column(Integer, primary_key=True, index=True)
     dealID = Column(String, unique=True, index=True, nullable=False)
+    updated_at = Column(DateTime, nullable=False)
 
     title = Column(String, index=True, nullable=False)
     shop = Column(String, nullable=False)

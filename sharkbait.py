@@ -1,3 +1,4 @@
+from datetime import datetime, timezone
 from database import Base, engine, SessionLocal
 from models import Deal
 
@@ -66,6 +67,7 @@ def transform(data, stores):
     d = pd.DataFrame(data)
     frame0 = d[essential]
     frame1 = frame0.rename(columns=rename)
+    frame1["updated_at"] = datetime.now(timezone.utc)
 
     frame1["price_now"] = frame1["price_now"].astype(float)
     frame1["metacritic"] = frame1["metacritic"].astype(float)
@@ -91,8 +93,11 @@ def custom_metrics(frame1):
     :return: a pd.DataFrame with custom metrics in columns, sorted by Rate|Price """
     #Create a custom metric, use all rate data for average data critic_steam, priorize user rating
     frame1["critic_steam"] = (frame1["metacritic"] * 0.3) + (frame1["steam_rate_percent"] * 0.7)
+    #if we dont have the metric X, use a reduced y
     frame1.loc[frame1["metacritic"] == 0, "critic_steam"] = frame1["steam_rate_percent"] * 0.9
-
+    frame1.loc[frame1["steam_rate_percent"] == 0, "critic_steam"] = frame1["metacritic"] * 0.9
+    #if we dont have the two, take a standard
+    frame1.loc[(frame1["metacritic"] == 0) & (frame1["steam_rate_percent"] == 0), "critic_steam"] = 50
     #Create a custom metric, use previous avg rating with an avg Rate|Price and sort with it
     frame1["sort_rate_price"] = frame1["critic_steam"] - (frame1["price_now"] * 0.1)
     frame2 = frame1.sort_values(by="sort_rate_price", ascending=False)
@@ -132,6 +137,7 @@ def load(frame):
             sttmt = sttmt.on_conflict_do_update(
                 index_elements=[Deal.dealID],
                 set_={
+                    "updated_at": record["updated_at"],
                     "price_now": record["price_now"],
                     "normal_price": record["normal_price"],
                     "metacritic": record["metacritic"],

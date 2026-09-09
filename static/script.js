@@ -47,6 +47,7 @@ function createGameCardHTML(deal) {
    const coverthumb = deal.thumb;
 const fallbackimg = 'https://images.unsplash.com/photo-1560275619-4662e36fa65c?w=300&auto=format&fit=crop';
 const redirectUrl = `https://www.cheapshark.com/redirect?dealID=${deal.dealID}`;
+const updatedtime = new Date(deal.updated_at).toLocaleDateString('pt-br');
 
 return `
     <article class="games-card">
@@ -73,6 +74,7 @@ return `
                 <h3 class="games-title">${deal.title}</h3>
             <span class="games-store">${deal.shop || 'Store'}</span>
                 <span class="games-steam-string">${deal.steam_rate || 'No Reviews'}</span>
+                <span class="games-updated-at">Baited in: ${updatedtime}</span>
                 <span class="games-metacritic">Metacritic: ${deal.metacritic ?? 'N/A'}</span>
             </div>
 
