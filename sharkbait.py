@@ -5,6 +5,7 @@ from models import Deal
 import requests
 import pandas as pd
 from sqlalchemy.dialects.sqlite import insert
+import numpy as np
 
 def main():
     pd.set_option("display.max_columns", None)
@@ -69,15 +70,23 @@ def transform(data, stores):
     frame1 = frame0.rename(columns=rename)
     frame1["updated_at"] = datetime.now(timezone.utc)
 
+    #check if there is a null and drop or fix with default data
+    frame1 = frame1.dropna(subset=["price_now", "dealID"])
+    frame1["steam_rate"] = frame1["steam_rate"].fillna("No Reviews")
+    frame1["title"] = frame1["title"].fillna("")
+    frame1["normal_price"] = frame1["normal_price"].fillna(frame1["price_now"])
+    can_null = ["metacritic", "steam_rate_percent"]
+    frame1[can_null] = frame1[can_null].fillna(0.0)
+
     frame1["price_now"] = frame1["price_now"].astype(float)
     frame1["metacritic"] = frame1["metacritic"].astype(float)
     frame1["steam_rate_percent"] = frame1["steam_rate_percent"].astype(float)
     frame1["normal_price"]= frame1["normal_price"].astype(float)
-
+    
+    frame1["savings"] = ((frame1["normal_price"] - frame1["price_now"]) / frame1["normal_price"]) * 100
 
     frame1["shop"] = frame1["shop"].map(dicts_store)
     frame2 = frame1.reset_index(drop=True)
-    frame2["steam_rate"] = frame2["steam_rate"].fillna("No Reviews")
 
     frame3 = custom_metrics(frame2)
 
@@ -90,22 +99,33 @@ def custom_metrics(frame1):
     with rating and price - using it to sort; also round decimals for 2
      
     :param frame1: a pd.DataFrame with Cheapshark API games
-    :return: a pd.DataFrame with custom metrics in columns, sorted by Rate|Price """
+    :return: a pd.DataFrame with custom metrics in columns, sorted with Rate by Price """
+    
     #Create a custom metric, use all rate data for average data critic_steam, priorize user rating
     frame1["critic_steam"] = (frame1["metacritic"] * 0.3) + (frame1["steam_rate_percent"] * 0.7)
     #if we dont have the metric X, use a reduced y
     frame1.loc[frame1["metacritic"] == 0, "critic_steam"] = frame1["steam_rate_percent"] * 0.9
     frame1.loc[frame1["steam_rate_percent"] == 0, "critic_steam"] = frame1["metacritic"] * 0.9
-    #if we dont have the two, take a standard
+    #if we dont have them, take a default
     frame1.loc[(frame1["metacritic"] == 0) & (frame1["steam_rate_percent"] == 0), "critic_steam"] = 50
-    #Create a custom metric, use previous avg rating with an avg Rate|Price and sort with it
-    frame1["sort_rate_price"] = frame1["critic_steam"] - (frame1["price_now"] * 0.1)
+    #Create a custom metric, use previous avg rating with an avg log Rate by Price and sort with it
+    frame1["sort_rate_price"] =(
+        frame1["critic_steam"] 
+        - (10 * np.log10(frame1["price_now"] + 1))
+        + (frame1["savings"] * 0.15) 
+    )
     frame2 = frame1.sort_values(by="sort_rate_price", ascending=False)
     frame2 = frame2.drop_duplicates(subset="dealID", keep="first")
 
     frame2["critic_steam"] = frame2["critic_steam"].round(2)
     frame2["sort_rate_price"] = frame2["sort_rate_price"].round(2)
     frame2["price_now"] = frame2["price_now"].round(2)
+    frame2["savings"] = frame2["savings"].round(2)
+    #try to find sneaky DLCs and put them down in score
+    not_game = "dlc|bundle|season pass|soundtrack|upgrade|expansion"
+    frame2.loc[
+        frame2["title"].str.contains(not_game, case=False, na=False),
+        "sort_rate_price"] = -100.00
 
     return frame2
 
@@ -146,6 +166,7 @@ def load(frame):
                     "critic_steam": record["critic_steam"],
                     "sort_rate_price": record["sort_rate_price"],
                     "thumb": record["thumb"],
+                    "savings": record["savings"]
                 },
             )
             session.execute(sttmt)

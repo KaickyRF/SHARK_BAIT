@@ -96,7 +96,7 @@ header p {
 
 #refresh-btn {
     background-color: var(--bg-surface);
-    color: var(--text);
+    color: var(--text-primary);
     border: 1px solid var(--bg-surface-hover);
     border-radius: 6px;
     padding: 10px 16px;
@@ -215,11 +215,24 @@ header p {
     color: var(--accent-red);
 }
 
+.games-price-now.price-cheapest {
+    color: #f1c40f; 
+    font-weight: 800;
+}
+
+.games-price-now.price-free {
+    color: var(--accent-green);
+    font-weight: 800;
+}
+
+
 .games-price-normal {
     font-size: 0.9rem;
     color: var(--text-secondary);
     text-decoration: line-through;
 }
+
+
 
 .games-critic-steam {
     font-size: 0.9rem;
@@ -245,4 +258,3 @@ header p {
 .buy-btn:hover {
     opacity: 0.9;
 }
-

@@ -18,3 +18,4 @@ class Deal(Base):
     critic_steam = Column(Float, nullable=False)
     sort_rate_price = Column(Float, nullable=False, index=True)
     thumb = Column(String, nullable=True)
+    savings = Column(Float, nullable=True)

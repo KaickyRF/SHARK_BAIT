@@ -7,23 +7,20 @@ const DOM = {
     totalDeals: document.querySelector('#total-deals-val'),
     highPromo: document.querySelector('#high-promo-val'),
     gamesGrid: document.querySelector('.games-grid'),
-    refreshBtn: document.querySelector('#refresh-btn')
+    refreshBtn: document.querySelector('#refresh-btn'),
+    freeDealsVal: document.querySelector('#free-deals-val'),
+    cheapestVal: document.querySelector('#cheapest-val')
 };
 
-
-function calculateDiscountPercent(normalPrice, priceNow) {
-    if (!normalPrice || normalPrice <= 0) return 0;
-    const discount = ((normalPrice - priceNow) / normalPrice) * 100;
-    return Math.max(0, Math.round(discount));
-}
 
 function calculateMaxDiscount(deals) {
     if (!deals || deals.length === 0) return 0;
 
-    const discounts = deals.map(deal => 
-        calculateDiscountPercent(deal.normal_price, deal.price_now)
-    );
+    const paidDeals = deals.filter(deal => deal.price_now > 0);
 
+    if (paidDeals.length === 0) return 0;
+
+    const discounts = paidDeals.map(deal => deal.savings);
     return Math.max(...discounts);
 }
 
@@ -32,19 +29,41 @@ function formatCurrency(value) {
     return `$${Number(value).toFixed(2)}`;
 }
 
-
 function updateKPIs(deals) {
+    if (!deals || deals.length === 0) return;
+
     DOM.totalDeals.textContent = deals.length;
     DOM.highPromo.textContent = `${calculateMaxDiscount(deals)}%`;
+
+    const paidDeals = deals.filter(deal => deal.price_now > 0);
+    if (paidDeals.length > 0) {
+        const cheapestPrice = Math.min(...paidDeals.map(deal => deal.price_now));
+        DOM.cheapestVal.textContent = formatCurrency(cheapestPrice);
+    } else {
+        DOM.cheapestVal.textContent = "N/A";
+    }
+
+    const freeDealsCount = deals.filter(deal => deal.price_now == 0).length;
+    DOM.freeDealsVal.textContent = freeDealsCount;
 }
 
-function createGameCardHTML(deal) {
-    const discount = calculateDiscountPercent(deal.normal_price, deal.price_now);
-    const priceNow = formatCurrency(deal.price_now);
-    const priceOld = formatCurrency(deal.normal_price);
+function createGameCardHTML(deal, cheapestPrice) {
+    const discount = Math.round(deal.savings);
+    const priceNormal = formatCurrency(deal.normal_price);
+
+    let priceText = formatCurrency(deal.price_now);
+    let priceClass = "games-price-now";
+
+    if (deal.price_now === 0) {
+        priceText = "FREE";
+        priceClass = "games-price-now price-free";
+        } 
+    else if (deal.price_now === cheapestPrice) {
+        priceClass = "games-price-now price-cheapest";
+        }
     
 
-   const coverthumb = deal.thumb;
+const coverthumb = deal.thumb;
 const fallbackimg = 'https://images.unsplash.com/photo-1560275619-4662e36fa65c?w=300&auto=format&fit=crop';
 const redirectUrl = `https://www.cheapshark.com/redirect?dealID=${deal.dealID}`;
 const updatedtime = new Date(deal.updated_at).toLocaleDateString('pt-br');
@@ -81,8 +100,8 @@ return `
             <div class="games-offer">
                 <div class="games-offer-price">
                     ${discount > 0 ? `<span class="games-discount">-${discount}%</span>` : ''}
-                    <span class="games-price-now">${priceNow}</span>
-                    <span class="games-price-normal">${priceOld}</span>
+                    <span class="${priceClass}">${priceText}</span>
+                    <span class="games-price-normal">${priceNormal}</span>
                 </div>
                 <div class="games-offer-metrics">
                     <span class="games-critic-steam">Score: ${deal.critic_steam}</span>
@@ -93,7 +112,7 @@ return `
                 Get Deal
             </a>
         </article>
-    `;
+    `
 }
 
 function renderGames(deals) {
@@ -102,7 +121,12 @@ function renderGames(deals) {
         return;
     }
 
-    const cardsHTML = deals.map(deal => createGameCardHTML(deal)).join('');
+    const paidDeals = deals.filter(deal => deal.price_now > 0);
+    const cheapestPrice = paidDeals.length > 0 
+        ? Math.min(...paidDeals.map(d => d.price_now)) 
+        : null;
+
+    const cardsHTML = deals.map(deal => createGameCardHTML(deal, cheapestPrice)).join('');
     DOM.gamesGrid.innerHTML = cardsHTML;
 }
 
