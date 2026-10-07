@@ -109,11 +109,12 @@ def custom_metrics(frame1):
     #if we dont have them, take a default
     frame1.loc[(frame1["metacritic"] == 0) & (frame1["steam_rate_percent"] == 0), "critic_steam"] = 50
     #Create a custom metric, use previous avg rating with an avg log Rate by Price and sort with it
-    frame1["sort_rate_price"] =(
+    frame1["sort_rate_price"] = (
         frame1["critic_steam"] 
         - (10 * np.log10(frame1["price_now"] + 1))
         + (frame1["savings"] * 0.15) 
     )
+    frame1["sort_rate_price"] = frame1["sort_rate_price"].clip(upper=100.0)
     frame2 = frame1.sort_values(by="sort_rate_price", ascending=False)
     frame2 = frame2.drop_duplicates(subset="dealID", keep="first")
 
@@ -122,7 +123,7 @@ def custom_metrics(frame1):
     frame2["price_now"] = frame2["price_now"].round(2)
     frame2["savings"] = frame2["savings"].round(2)
     #try to find sneaky DLCs and put them down in score
-    not_game = "dlc|bundle|season pass|soundtrack|upgrade|expansion"
+    not_game = "dlc|season pass|soundtrack|upgrade|expansion"
     frame2.loc[
         frame2["title"].str.contains(not_game, case=False, na=False),
         "sort_rate_price"] = -100.00

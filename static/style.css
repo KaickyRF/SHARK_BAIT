@@ -221,7 +221,7 @@ header p {
 }
 
 .games-price-now.price-free {
-    color: var(--accent-green);
+    color: var(--accent-blue);
     font-weight: 800;
 }
 
@@ -234,7 +234,7 @@ header p {
 
 
 
-.games-critic-steam {
+.games-sort-rate-price {
     font-size: 0.9rem;
     font-weight: 700;
     color: var(--accent-green);

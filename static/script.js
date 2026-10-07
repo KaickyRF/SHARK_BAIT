@@ -21,7 +21,7 @@ function calculateMaxDiscount(deals) {
     if (paidDeals.length === 0) return 0;
 
     const discounts = paidDeals.map(deal => deal.savings);
-    return Math.max(...discounts);
+    return Math.round(Math.max(...discounts));
 }
 
 function formatCurrency(value) {
@@ -95,6 +95,7 @@ return `
                 <span class="games-steam-string">${deal.steam_rate || 'No Reviews'}</span>
                 <span class="games-updated-at">Baited in: ${updatedtime}</span>
                 <span class="games-metacritic">Metacritic: ${deal.metacritic ?? 'N/A'}</span>
+                <span class="games-critic-steam">Metacritic X Steam: ${deal.critic_steam ?? 'N/A'}</span>
             </div>
 
             <div class="games-offer">
@@ -104,7 +105,7 @@ return `
                     <span class="games-price-normal">${priceNormal}</span>
                 </div>
                 <div class="games-offer-metrics">
-                    <span class="games-critic-steam">Score: ${deal.critic_steam}</span>
+                    <span class="games-sort-rate-price">Score: ${Number(deal.sort_rate_price).toFixed(1)}</span>
                 </div>
             </div>
 
