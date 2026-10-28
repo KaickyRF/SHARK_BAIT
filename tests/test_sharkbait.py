@@ -6,10 +6,10 @@ from sharkbait import extract, transform, custom_metrics, Deal, Base, load
 from requests.exceptions import HTTPError
 import pytest
 
-from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float
-from sqlalchemy.orm import declarative_base, sessionmaker
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
 
-#setting test_database
+#setting test_database: open a test table in memory
 @pytest.fixture
 def memory_session():
     engine = create_engine("sqlite:///:memory:")
@@ -21,8 +21,10 @@ def memory_session():
     session.close()
 #database setting ends; test function in the end on file
 
+
 @patch("sharkbait.requests.get")
 def test_extract(mock_request):
+    #test the conection with cheapshark API; simulates expected JSON response for games and store
 
     mock_response = MagicMock()
     mock_response.json.return_value = [
@@ -73,12 +75,14 @@ def test_extract(mock_request):
 
 @patch("sharkbait.requests.get")
 def test_extract_error(mock_request_error):
+    #test that the function raises an exception if the conection fails
     mock_request_error.side_effect = HTTPError("No response from the API")
     with pytest.raises(HTTPError):
         extract()
 
 
 def test_transform():
+    #test the data pipeline processing; sends the expected estructure from extract; types undefined
     expensive_fish = [
     {
         "dealID": "deal_101",
@@ -118,6 +122,7 @@ def test_transform():
 
 
 def test_custom_metrics():
+    #test the internal metrics and features creation; use a data structure expected from transform function; types defined
     cheap_fish = {
     "dealID": ["deal_001", "deal_002"],
     "title": ["Shark", "Fish"],
@@ -149,6 +154,7 @@ def test_custom_metrics():
 #database test
 @patch("sharkbait.SessionLocal")
 def test_database_save(mock_session_local, memory_session):
+    #tests that the load function is recording a correct table in database; check data types
 
     mock_session_local.return_value = memory_session
 
@@ -182,6 +188,7 @@ def test_database_save(mock_session_local, memory_session):
     assert deal_bait.thumb == "https://images.example.com/thumb.jpg"
     assert deal_bait.updated_at is not datetime.now(timezone.utc)
 
+    #test that load function upsert logic works; receive same game, by dealID, then updates the data (price_now in this case)
     df_test2 = pd.DataFrame(
     [
         {
@@ -211,7 +218,9 @@ def test_database_save(mock_session_local, memory_session):
 
 @patch("sharkbait.SessionLocal")
 def test_database_save_data(mock_session_local):
-    #asserting data integrity error rollback
+    #asserting data integrity error rollback; if the response is unexpected, interrupt the table modeling
+    #raises an real error by sending incomplete data (missing price_now column)
+
     mock_session_rollback = MagicMock()
     mock_session_local.return_value = mock_session_rollback
 
@@ -241,7 +250,8 @@ def test_database_save_data(mock_session_local):
     
 @patch("sharkbait.SessionLocal")
 def test_database_save_database(mock_session_local):
-    #asserting database conection error rollback
+    #asserting database conection error rollback; if the DB recording raises an error/harm databases, interrupt the modeling
+    #raises an forced SQLite error with a mock, to force the exception
     mock_session_rollback = MagicMock()
     mock_session_local.return_value = mock_session_rollback
     mock_session_rollback.execute.side_effect = Exception("Erro de conexão no Database")

@@ -40,12 +40,12 @@ def extract(page_size=60):
 
 def transform(data, stores):
     """
-    Turns data into pd.DataFrame and cleans, such as tranforming datatype and cleaning nulls
-    and changing storeID for its name
+    Turns data into pd.DataFrame and cleans, such as tranforming datatype, cleaning nulls
+    and changing storeID for its name on deals DF; calls custom_metrics function and returns to load fucntion
 
     :param data: a JSON from Cheapshark API, list of dicts for each game
     :param stores: a JSON from Cheapshark API, list of dicts for each store
-    :return: a game offer pd.DataFrame with structured data and builtin metrics
+    :return: a game offer pd.DataFrame with structured data and builtin metrics to load
         """
     
     essential = ["dealID", "title", "storeID","salePrice", "normalPrice",
@@ -95,11 +95,12 @@ def transform(data, stores):
 def custom_metrics(frame1):
     """
     A extend for Transforming the data, assuming duplicate delete,
-    adding business metrics for average game rating and a avg score 
-    with rating and price - using it to sort; also round decimals for 2
+    adding business metrics for average game rating and a logaritmic score
+    with rating, savings and price, under a cap of 100.00 score; also round decimals by 2;
+    DLCs and not games packages have their score set to -100
      
     :param frame1: a pd.DataFrame with Cheapshark API games
-    :return: a pd.DataFrame with custom metrics in columns, sorted with Rate by Price """
+    :return: a pd.DataFrame with custom metrics in columns """
     
     #Create a custom metric, use all rate data for average data critic_steam, priorize user rating
     frame1["critic_steam"] = (frame1["metacritic"] * 0.3) + (frame1["steam_rate_percent"] * 0.7)
@@ -108,7 +109,7 @@ def custom_metrics(frame1):
     frame1.loc[frame1["steam_rate_percent"] == 0, "critic_steam"] = frame1["metacritic"] * 0.9
     #if we dont have them, take a default
     frame1.loc[(frame1["metacritic"] == 0) & (frame1["steam_rate_percent"] == 0), "critic_steam"] = 50
-    #Create a custom metric, use previous avg rating with an avg log Rate by Price and sort with it
+    #Create a custom metric, use previous avg rating with an logn Rate by Price and sort with it
     frame1["sort_rate_price"] = (
         frame1["critic_steam"] 
         - (10 * np.log10(frame1["price_now"] + 1))
@@ -134,14 +135,12 @@ def load(frame):
     """Saves or updates game offers from a pandas DataFrame into the SQLite database.
 
     Performs an UPSERT (insert or update) operation using the 'dealID' as
-    the constraint key. If a deal already exists in the database, it
-    updates its prices, ratings, and metrics; otherwise, it inserts it as
-    a new row.
+    constraint key. If a deal already exists in database, updates its prices,
+    ratings, and metrics; otherwise, it inserts it as a new row.
 
-    :param frame: A pandas DataFrame containing structured offers from the
+    :param frame: A pd.DataFrame with structured games offers from the
     CheapShark API.
-    :type frame: pd.DataFrame
-    :return: None
+    :return: None (creates a DB file if it doesnt exists)
     :raises Exception: Rolls back the transaction and logs an error if the
     database operation fails.
     """
@@ -151,10 +150,11 @@ def load(frame):
     records = frame.to_dict(orient="records")
 
     session = SessionLocal()
+    #rollback wrapper; catch operation failure to undo all changes
     try:
         for record in records:
             sttmt = insert(Deal).values(**record)
-
+            #update schedule; if a deal with same dealID is found, send this columns new data only
             sttmt = sttmt.on_conflict_do_update(
                 index_elements=[Deal.dealID],
                 set_={
