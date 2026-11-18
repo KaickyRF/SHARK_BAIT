@@ -1,12 +1,17 @@
 # **SHARK BAIT** 🦈 - A PIPELINE POWERED BY **CHEAPSHARK API** AND PYTHON
 
-### THIS IS AN UPGRADE FOR MY CS50P PROJECT. FIRSTLY IT WAS A SIMPLE SCRIPT PIPELINE PRODUCING A CSV SORTED FILE. NOW ITS A COMPLETE INTEGRATED DATA PIPELINE SERVICE, AS FOLLOWS
 
 🦈A Data Pipeline written in python that uses Cheapshark API offers to get, clean and show the best deals of PC games from multiple stores; store it on a database table and create a REST API containing such deals🦈
 
 🦈Also includes a static web interface to consume that API and generate a useful visual design🦈
 
+<p align="center">
+  <img src="assets/sharkbait_sqlviewer.png" width="48%" alt="DATABASE SHARK BAIT" />
+  &nbsp;
+  <img src="assets/sharkbait_staticview.png" width="48%" alt="STATIC SHARK BAIT" />
+</p>
 
+- THIS IS AN UPGRADE FOR MY CS50P PROJECT; FIRSTLY IT WAS A SIMPLE SCRIPT PIPELINE CREATING A CSV SORTED FILE. NOW ITS A COMPLETE PEER TO PEER DATA PIPELINE PROJECT (ABRANGING BACK, DATA AND FRONT-END)
 ---
 
 ## WHY THIS PROJECT?
@@ -84,7 +89,7 @@ SHARK BAIT was built with these libraries and techs
 * **Core:** `Python 3.x`
 * **Data Processing:** `Pandas` & `NumPy` (clean, transform and custom metrics calculation)
 * **Database & ORM:** `SQLite` & `SQLAlchemy` (relational persistence and Upsert/Rollback control)
-* **API Integration:** `Requests` (consume Cheapshark API)
+* **API Integration:** `Requests`, `FastAPI` & `Pydantic` (consume Cheapshark API, serves REST API and data validation)
 * **Testing:** `Pytest` & `Unittest.mock` (unit tests and error simulations)
 
 
@@ -137,8 +142,8 @@ pip install -r requirements.txt
 To execute this program run:
 
 ```bash 
-python project.py # on Windows
-python3 project.py # on Linux/macOS
+python sharkbait.py # on Windows
+python3 sharkbait.py # on Linux/macOS
 ```
 - This will create/load an `sharkbait.db` file with the game deals (use a database SQLite viewer to explore the table)
 
@@ -146,12 +151,12 @@ python3 project.py # on Linux/macOS
 
 
 ### GET A TEST
-To execute a test with the test_project.py file, using mocks, run:
+To execute a test with the test_sharkbait.py file, using mocks, run:
 
 ```bash Test
-pytest test_project.py -v #in the tests/ folder
+pytest test_sharkbait.py -v #in the tests/ folder
 #or
-pytest tests/test_project.py -v #from root project folder
+pytest tests/test_sharkbait.py -v #from root project folder
 ```
 
 ---
